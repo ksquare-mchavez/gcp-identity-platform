@@ -184,3 +184,32 @@ But if you’re building an app where end users log in (with email/password, OAu
 No, you cannot use Identity Platform without a Google Cloud project and,
 You can authenticate users without a service account, but a GCP project is always required.
 ```
+
+### Why GCP tokens are signed by a service account
+```
+Google Cloud Platform (GCP) tokens, especially ID tokens and access tokens used in authentication 
+and authorization are often signed by service accounts for several important reasons:
+
+1. Delegated Trust and Identity
+Service accounts in GCP represent non-human identities (e.g., apps, services, VMs). 
+When a token is signed by a service account:
+- It asserts that the token was issued by a trusted identity within the GCP ecosystem.
+- The signature can be verified using the public key associated with that service account.
+
+2. Token Verification
+Tokens signed by service accounts can be:
+- Verified by other services using the public key from the service account’s certificate.
+- Used to authenticate the identity of the caller (e.g., a microservice calling another microservice).
+
+3. Security and Isolation
+Using service accounts to sign tokens:
+- Limits the scope of access.
+- Ensures that only authorized services can issue tokens.
+- Helps with auditing and access control.
+
+In summary, generating a JWT signed with a private key for use with Google Cloud Platform (GCP) 
+services typically involves using a service account and its associated private key.
+
+```
+
+

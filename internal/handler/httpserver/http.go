@@ -30,14 +30,12 @@ func RegisterRoutes(app *fiber.App) {
 func handleDecodeToken(c *fiber.Ctx) error {
 	claims := c.Locals("claims").(jwt.MapClaims)
 	return c.JSON(fiber.Map{
-		"message":    "User profile retrieved successfully",
-		"user_id":    claims["user_id"],
-		"email":      claims["email"],
-		"claims":     claims,
-		"header":     c.Locals("header"),
-		"jwk":        c.Locals("jwk"),
-		"pem_format": c.Locals("pem_format"),
-		"token":      c.Get("Authorization"),
+		"message":               "User profile retrieved successfully",
+		"claims":                claims,
+		"header":                c.Locals("header"),
+		"jwk":                   c.Locals("jwk"),
+		"public_key_pem_format": c.Locals("pem_format"),
+		"token":                 c.Get("Authorization"),
 	})
 }
 
@@ -45,8 +43,8 @@ func handleDecodeToken(c *fiber.Ctx) error {
 func handlePemPublicKey(c *fiber.Ctx) error {
 	jwk := c.Locals("jwk").(*model.JWK)
 	return c.JSON(fiber.Map{
-		"n":          jwk.N, // In RS256, "n" represents the modulus of the RSA public key.
-		"pem_format": c.Locals("pem_format"),
+		"n":                     jwk.N, // In RS256, "n" represents the modulus of the RSA public key.
+		"public_key_pem_format": c.Locals("pem_format"),
 	})
 }
 

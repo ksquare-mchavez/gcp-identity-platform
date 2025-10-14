@@ -43,6 +43,16 @@ func AuthMiddleware() fiber.Handler {
 		}
 
 		authHeader := c.Get("Authorization")
+		ApiGatewayToken := c.Get("X-Apigateway-Api-Userinfo")
+		// If Google Cloud API Gateway is set, get the original Authorization header
+		if ApiGatewayToken != "" {
+			XForwardedAuthHeader := c.Get("X-Forwarded-Authorization")
+			if XForwardedAuthHeader != "" {
+				authHeader = XForwardedAuthHeader
+			}
+		}
+
+		// Check if the Authorization header is present and has the correct format
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Missing or invalid Authorization header"})
 		}

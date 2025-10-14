@@ -7,26 +7,25 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
 	"gcp-identity-platform/internal/middleware"
 	"gcp-identity-platform/internal/model"
 )
 
 const (
-	// Google Identity Platform endpoints
 	signUpURL       = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key="
 	signInURL       = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key="
 	lookupURL       = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key="
 	signInCustomURL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key="
 )
 
-// getGCPKey checks if the API key is set in the environment variables.
+// getGCPKey retrieves the API key from environment variables.
 func getGCPKey(name string) (string, error) {
 	apiKey := os.Getenv(name)
 	if apiKey == "" {
-		return "", errors.New("API key not set")
+		return "", fmt.Errorf("%s API key not set in environment variables", name)
 	}
-
 	return apiKey, nil
 }
 
@@ -37,16 +36,12 @@ func postRequest(url string, payload interface{}) (*http.Response, error) {
 		return nil, err
 	}
 
-	httpResp, err := http.Post(url, "application/json", bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
-
-	return httpResp, nil
+	return http.Post(url, "application/json", bytes.NewBuffer(body))
 }
 
 // handleErrorResponse processes the error response from the HTTP request.
 func handleErrorResponse(httpResp *http.Response) error {
+	defer httpResp.Body.Close()
 	var errResp map[string]interface{}
 	if err := json.NewDecoder(httpResp.Body).Decode(&errResp); err != nil {
 		return err
@@ -54,7 +49,7 @@ func handleErrorResponse(httpResp *http.Response) error {
 
 	if errMsg, ok := errResp["error"].(map[string]interface{}); ok {
 		if msg, ok := errMsg["message"].(string); ok {
-			return errors.New("error: " + msg)
+			return fmt.Errorf("error: %s", msg)
 		}
 	}
 
@@ -62,14 +57,12 @@ func handleErrorResponse(httpResp *http.Response) error {
 }
 
 // ValidateIDToken validates a Google ID token using the Identity Platform accounts:lookup endpoint.
-// Get user data from ID token
 // https://cloud.google.com/identity-platform/docs/use-rest-api#section-get-account-info
 func ValidateIDToken(idToken string) (map[string]interface{}, error) {
 	apiKey, err := getGCPKey("GCP_IDENTITY_API_KEY")
 	if err != nil {
 		return nil, err
 	}
-
 	url := fmt.Sprintf("%s%s", lookupURL, apiKey)
 	payload := model.Token{IDToken: idToken}
 	httpResp, err := postRequest(url, payload)
@@ -91,10 +84,14 @@ func ValidateIDToken(idToken string) (map[string]interface{}, error) {
 }
 
 // AuthenticateUser authenticates a user with their email and password.
-// Sign in with email / password
 // https://cloud.google.com/identity-platform/docs/use-rest-api#section-sign-in-email-password
 func AuthenticateUser(email, password string) (*model.Token, error) {
 	apiKey, err := getGCPKey("GCP_IDENTITY_API_KEY")
+	if err != nil {
+		return nil, err
+	}
+
+	showPublicKey, err := getGCPKey("GCP_SHOW_PUBLIC_KEYS")
 	if err != nil {
 		return nil, err
 	}
@@ -120,34 +117,34 @@ func AuthenticateUser(email, password string) (*model.Token, error) {
 		return nil, err
 	}
 
-	token.PublicKey, err = middleware.GetPemFormatFromIDToken(token.IDToken)
-	if err != nil {
-		return nil, err
+	if showKey, err := strconv.ParseBool(showPublicKey); err == nil && showKey {
+		token.PublicKey, err = middleware.GetPemFormatFromIDToken(token.IDToken)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &token, nil
 }
 
-// SignUpUser registers a new user using Google Identity Platform
-// Sign up with email / password
+// SignUpUser registers a new user using Google Identity Platform.
 // https://cloud.google.com/identity-platform/docs/use-rest-api#section-create-email-password
 func SignUpUser(email, password string) (*model.Token, error) {
-	// For anonymous sign-up, email and password can be empty
-	payload := model.User{
-		ReturnSecureToken: true,
-	}
+	payload := model.User{ReturnSecureToken: true}
 	apiKey, err := getGCPKey("GCP_IDENTITY_API_KEY")
+	if err != nil {
+		return nil, err
+	}
+
+	showPublicKey, err := getGCPKey("GCP_SHOW_PUBLIC_KEYS")
 	if err != nil {
 		return nil, err
 	}
 
 	url := fmt.Sprintf("%s%s", signUpURL, apiKey)
 	if email != "" && password != "" {
-		payload = model.User{
-			Email:             email,
-			Password:          password,
-			ReturnSecureToken: true,
-		}
+		payload.Email = email
+		payload.Password = password
 	}
 
 	httpResp, err := postRequest(url, payload)
@@ -165,9 +162,11 @@ func SignUpUser(email, password string) (*model.Token, error) {
 		return nil, err
 	}
 
-	token.PublicKey, err = middleware.GetPemFormatFromIDToken(token.IDToken)
-	if err != nil {
-		return nil, err
+	if showKey, err := strconv.ParseBool(showPublicKey); err == nil && showKey {
+		token.PublicKey, err = middleware.GetPemFormatFromIDToken(token.IDToken)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &token, nil
@@ -192,13 +191,13 @@ func SignInWithCustomToken(customToken string) (map[string]interface{}, error) {
 	}
 	defer httpResp.Body.Close()
 
+	if httpResp.StatusCode != http.StatusOK {
+		return nil, errors.New("signInWithCustomToken failed")
+	}
+
 	var respBody map[string]interface{}
 	if err := json.NewDecoder(httpResp.Body).Decode(&respBody); err != nil {
 		return nil, err
-	}
-
-	if httpResp.StatusCode != http.StatusOK {
-		return nil, errors.New("signInWithCustomToken failed")
 	}
 
 	return respBody, nil
