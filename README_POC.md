@@ -18,6 +18,11 @@ This document provides:
 
 This guide is intended for iOS engineers implementing client-side logic.
 
+
+**Expected Flow:**
+
+<img src="diagrams/passwordless-flow.png" alt="passwordles-flow" width="50%" />
+
 ---
 
 ## Setup Instructions

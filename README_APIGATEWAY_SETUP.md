@@ -8,6 +8,10 @@ Enable APIs
 - Service Control API: Provides control plane functionality to managed services, such as logging, monitoring, and status checks
 - Service Management API: Service Management allows service producers to publish their services on Google Cloud Platform 
 
+**GCP Identity Platform Architecture:**
+
+<img src="diagrams/gcp_architecture.png" alt="gcp_architecture" width="50%" />
+
 ## 1. Deploy Go Backend to Cloud Run
 
 #### 1. Build and push your container image:
