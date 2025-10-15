@@ -65,6 +65,3 @@ Note: These emails are not intended for PHI transport; including PHI could break
 - Disable automatic OOB emails
 - Use your own secure mail provider
 - Generate and deliver the link yourself via your secure system (no PHI in the URL)
-
-- However, for something like a password reset or email verification, the response itself does not contain the actual OOB link (e.g. the password-reset URL).
-
