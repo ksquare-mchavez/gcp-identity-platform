@@ -27,7 +27,7 @@ Used to send out-of-band (OOB) codes (e.g., email verification, password reset) 
 
 - With Google Identity Platform (advanced Firebase Auth)
 - Firebase generates a one-time OOB action code and sends the link to the user's email (using default/configured template)
-- The API response does **not** contain the actual OOB link (for security reasons)
+- The API response does **not** contain the actual OOB link (for security reasons). These links can directly reset a password or verify an email.
 
 **Reference:** [Send Password Reset Email (Google Docs)](https://cloud.google.com/identity-platform/docs/use-rest-api#section-send-password-reset-email)
 
@@ -61,7 +61,7 @@ Google’s built-in email delivery system sends OOB links.
 - Email subject or body templates
 - Action URLs or query parameters
 
-These emails are not intended for PHI transport; including PHI could break HIPAA compliance.
+Note: These emails are not intended for PHI transport; including PHI could break HIPAA compliance.
 
 **For HIPAA-safe email delivery:**
 - Disable automatic OOB emails
@@ -72,44 +72,9 @@ Findings:
 1. Sign up user (email-only / password-less)
 -- Send password reset email --
 This is used to send out-of-band (OOB) codes (e.g. email verification, password reset) to users.
-- With Google’s Identity Platform (which is a more enterprise / advanced version of Firebase Auth)
 - Firebase generates a one-time “out-of-band” (OOB) action code internally and sends the corresponding link 
 to the user’s email (using the default or configured email template).
 - However, for something like a password reset or email verification, the response itself does not contain the actual OOB link (e.g. the password-reset URL).
 That’s the expected behavior.
 
 https://cloud.google.com/identity-platform/docs/use-rest-api#section-send-password-reset-email
-
-curl 'https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=[API_KEY]' \
--H 'Content-Type: application/json' \
---data-binary '{"requestType":"PASSWORD_RESET","email":"[user@example.com]"}'
-
-Sample Response:
-{
- "email": "[user@example.com]"
-}
-
-Notes:
-If your project is under Firebase Auth (Firebase Console), it is not HIPAA compliant.
-If it is a Google Cloud Identity Platform project with a signed BAA, it can be.
-
-Firebase never includes the link in the API response for security reasons — 
-to prevent misuse or phishing (since these links can directly reset a password or verify an email).
-
-
-
-Email Links (sendOobCode)
-Sending OOB (out-of-band) links involves Google’s built-in email delivery system.
-
-You should not include PHI in:
-- Email subject or body templates
-- Action URLs or query parameters
-
-These emails are not intended for PHI transport, and that could break HIPAA compliance even if 
-the service itself is covered.
-
-If you need HIPAA-safe email delivery, you should:
-- Disable automatic OOB emails
-- Use your own secure mail provider
-- Generate and deliver the link yourself via your secure system (no PHI in the URL)
-
