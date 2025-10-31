@@ -1,0 +1,16 @@
+The work product of this phase should be a short document that contains:
+- Description of the necessary setup
+- API endpoints to call for the different operations
+- Sample curl commands to test the flow of operations
+ 
+The goal is to demonstrate the following operations:
+ 
+1. Sign up user (email-only / password-less)
+2. Sign in user (ideally email-only / password-less, but could use
+   pre-registered email-password pairs for early testing)
+3. Receive a payload containing access token (JWT) + refresh token.
+4. Get the certificate / public key to verify the signature of the JWT
+5. Get a new JWT access token using the refresh token.
+ 
+The document should be usable by an iOS engineer to implement the client-side
+logic for the above operations.

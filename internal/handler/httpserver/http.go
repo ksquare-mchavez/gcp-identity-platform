@@ -18,12 +18,56 @@ func RegisterRoutes(app *fiber.App) {
 	app.Post("/signup", handleSignUp)
 	app.Post("/signup-anonymous", handleSignUpAnonymous)
 	app.Post("/custom-token", handleSignInWithCustomToken)
+	// Password-less Email Link sign-in route
+	app.Post("/send-email-link", handleSendEmailLink)
 	// Protect routes with GCP ID token authentication
 	app.Use("/secure", auth.AuthMiddleware())
 	// Secure decode token route
 	app.Get("/secure/decode-token", handleDecodeToken)
 	// Secure decode token route to get public key in PEM format
 	app.Get("/secure/public-key", handlePemPublicKey)
+
+	// Endpoint to capture the response after email link sign-in
+	app.Get("/post-signin", handlePostSignIn)
+}
+
+// handlePostSignIn captures the response after email link sign-in
+func handlePostSignIn(c *fiber.Ctx) error {
+	// You can capture query params or POST data here if needed
+	// For demonstration, parse all query params into a map
+	params := make(map[string]string)
+	_ = c.QueryParser(&params)
+	var body map[string]interface{}
+	if err := c.BodyParser(&body); err != nil {
+		body = map[string]interface{}{"error": "Could not parse body"}
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Post sign-in callback received",
+		"query":   params,
+		"body":    body,
+	})
+}
+
+// handleSendEmailLink handles sending a password-less sign-in email link
+func handleSendEmailLink(c *fiber.Ctx) error {
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return respondWithError(c, fiber.StatusBadRequest, "Invalid request")
+	}
+	if req.Email == "" {
+		return respondWithError(c, fiber.StatusBadRequest, "email is required")
+	}
+	resp, err := service.SendEmailLinkSignIn(req.Email)
+	if err != nil {
+		return respondWithError(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(fiber.Map{
+		"message":  "Email link sent successfully",
+		"response": resp,
+	})
 }
 
 // handleDecodeToken handles the decoding of the ID token

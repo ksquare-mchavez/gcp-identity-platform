@@ -3,17 +3,19 @@ FROM golang:1.25-alpine AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
+# This copies all your source code into /app
+COPY . . 
 RUN go build -gcflags="all=-N -l" -o app ./cmd/main.go
+# Install Delve in builder
+# RUN go install github.com/go-delve/delve/cmd/dlv@v1.22.1
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 FROM alpine:latest
 WORKDIR /root/
 RUN apk add --no-cache bash ca-certificates
-COPY --from=builder /app/app .
-# Install Delve
-RUN apk add --no-cache git go && \
-    go install github.com/go-delve/delve/cmd/dlv@latest
-EXPOSE 8080 40000
-ENV GCP_IDENTITY_API_KEY=""
-CMD ["/go/bin/dlv", "exec", "./app", "--headless", "--listen=:40000", "--api-version=2", "--accept-multiclient"]
-
+# Copy all source code and binary from builder
+COPY --from=builder /app/app /app
+COPY --from=builder /go/bin/dlv /go/bin/dlv
+EXPOSE 8080 4000
+ENV GCP_IDENTITY_API_KEY="AIzaSyBEmiDp59BXwr0gb5cD2XhEorUAGe2sWt4"
+CMD ["/go/bin/dlv", "exec", "/root/app", "debug", "--headless", "--listen=:4000", "--api-version=2", "--log=true", "--accept-multiclient", "--continue=false"]

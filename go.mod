@@ -1,6 +1,6 @@
 module gcp-identity-platform
 
-go 1.25.1
+go 1.21
 
 require github.com/gofiber/fiber/v2 v2.52.9
 

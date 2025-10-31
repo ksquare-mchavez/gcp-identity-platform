@@ -6,7 +6,11 @@ services:
       dockerfile: Dockerfile.debug
     ports:
       - "8080:8080"
-      - "40000:40000"
+      - "4000:4000"
     env_file:
       - .env
     restart: unless-stopped
+
+networks:
+  default:
+      name: gcp-identity-platform-network

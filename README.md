@@ -26,27 +26,15 @@ With Identity Platform, you can authenticate users directly using:
 
 You don’t need a service account for any of this.
 
-## Create an API key on [Google Cloud](https://cloud.google.com/docs/authentication/api-keys#create) 
-1. In the Google Cloud console, go to the [Credentials page](https://console.cloud.google.com/apis/credentials)
-2. Go to Credentials
-3. Click Create credentials, and then select API key from the menu.
-```
-Optional: To bind the API key to a service account, select the Authenticate API calls through a service account checkbox and then click Select a service account to select the service account you want to bind to the key.
-For more information, see API keys bound to a service account.
-```
-4. Add API key restrictions.
-5. Restricting API keys is a best practice. For more information, see Apply API key restrictions.
-6. Click Create. The API key created dialog displays the string for your newly created key.
-
 ## Usage
 
 ### Using the [REST API](https://cloud.google.com/identity-platform/docs/use-rest-api#before_you_begin)
 To use the REST API, you'll need an Identity Platform API key. To obtain a key:
 
-1. Go to the Identity Providers page in the Google Cloud console.
-2. Go to the Identity Providers page.
-3. Click Application setup details.
-4. Copy the apiKey field.
+1. Go to the **Identity Providers page** in the [Google Cloud console](https://console.cloud.google.com/customer-identity/providers).
+2. On the left menu, click Providers.
+3. Click **Application setup details**.
+4. Copy the `apiKey` field.
 
 ### 1. Set your GCP Identity Platform API Key
 Export your API key as an environment variable:
@@ -186,7 +174,7 @@ You can authenticate users without a service account, but a GCP project is alway
 ```
 
 ### Why GCP tokens are signed by a service account
-```
+```sh
 Google Cloud Platform (GCP) tokens, especially ID tokens and access tokens used in authentication 
 and authorization are often signed by service accounts for several important reasons:
 
@@ -212,4 +200,47 @@ services typically involves using a service account and its associated private k
 
 ```
 
+### Tools
+
+Build and run docker-compose debug
+```sh
+docker-compose -f docker-compose.debug.yml up --build
+```
+Build and run docker-compose debug with -d
+```sh
+docker-compose -f docker-compose.debug.yml up --build -d
+```
+Stop containers 
+```sh
+docker-compose -f docker-compose.debug.yml down
+```
+
+Check existing containers
+```sh
+docker ps -a
+```
+Remove the old container
+```sh
+docker rm <your_container_name>
+```
+Verify the working directory in your container
+```sh
+docker exec -it <container_id> pwd
+```
+Check Delve port
+```sh
+docker exec -it <container_id> ps aux | grep dlv
+```
+```
+    1 root      0:00 /go/bin/dlv exec /root/app debug --headless --listen=:4000
+   12 root      0:00 /go/bin/dlv ** telemetry **
+```
+Confirm version inside container
+```sh
+docker exec -it <container_name> dlv version
+```
+List directory files
+```sh
+docker exec -it <container_id> ls -la /root/app
+```
 

@@ -202,3 +202,30 @@ func SignInWithCustomToken(customToken string) (map[string]interface{}, error) {
 
 	return respBody, nil
 }
+
+// SendEmailLinkSignIn sends a password-less sign-in email link using GCP Identity Platform
+func SendEmailLinkSignIn(email string) (map[string]interface{}, error) {
+	apiKey, err := getGCPKey("GCP_IDENTITY_API_KEY")
+	if err != nil {
+		return nil, err
+	}
+	url := fmt.Sprintf("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s", apiKey)
+	payload := map[string]interface{}{
+		"requestType": "EMAIL_SIGNIN",
+		"email":       email,
+		"continueUrl": "http://localhost:8080/post-signin", // Use your app's URL
+	}
+	httpResp, err := postRequest(url, payload)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResp.Body.Close()
+	if httpResp.StatusCode != http.StatusOK {
+		return nil, handleErrorResponse(httpResp)
+	}
+	var result map[string]interface{}
+	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
