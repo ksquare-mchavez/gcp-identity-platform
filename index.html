@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Phone Authentication</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(120deg, #f8fafc 0%, #e0e7ff 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    h1 {
+      color: #1976d2;
+      margin-bottom: 24px;
+      font-size: 2rem;
+      letter-spacing: 1px;
+    }
+    .auth-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(59, 130, 246, 0.08);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 320px;
+      max-width: 360px;
+    }
+    input[type="text"] {
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus {
+      border-color: #3b82f6;
+    }
+    button {
+      padding: 10px 0;
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    #recaptcha-container {
+      margin-bottom: 8px;
+    }
+  </style>
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.12.1/firebase-app-compat.js"></script>
+  <!-- Firebase Auth SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.12.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <h1>Sign In with Phone Number</h1>
+  <div class="auth-container">
+    <div id="recaptcha-container"></div>
+    <input type="text" id="phone-number" placeholder="Enter phone number" required>
+    <button onclick="sendVerificationCode()">Send Verification Code</button>
+    <input type="text" id="verification-code" placeholder="Enter verification code" required>
+    <button onclick="verifyCode()">Verify Code</button>
+  </div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC90ZauZKIOUltCNFpl_R5ThCPm90FPkIU",
+      authDomain: "biolinq-test.firebaseapp.com",
+      projectId: "biolinq-test",
+      storageBucket: "biolinq-test.firebasestorage.app",
+      messagingSenderId: "788107264953",
+      appId: "1:788107264953:web:470779c0d9f5ba0b98ec68", 
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      'size': 'invisible',
+      'callback': function(response) {
+        console.log('reCAPTCHA solved');
+      }
+    });
+
+    let confirmationResult;
+    function sendVerificationCode() {
+      const phoneNumber = document.getElementById('phone-number').value;
+      const appVerifier = recaptchaVerifier;
+      firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
+        .then((result) => {
+          confirmationResult = result;
+          console.log('Verification code sent');
+        })
+        .catch((error) => {
+          console.error('Error during sign-in:', error.message);
+        });
+    }
+
+    function verifyCode() {
+      const verificationCode = document.getElementById('verification-code').value;
+      confirmationResult.confirm(verificationCode)
+        .then((result) => {
+          const user = result.user;
+          console.log('User:', user);
+          alert('Verification successful! User signed in.');
+        })
+        .catch((error) => {
+          console.error('Error during verification:', error.message);
+          alert('Verification failed. Please try again.');
+        });
+    }
+
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        console.log('User is signed in:', user);
+      } else {
+        console.log('No user is signed in');
+      }
+    });
+  </script>
+</body>
+</html>
